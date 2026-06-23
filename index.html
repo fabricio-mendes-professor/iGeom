@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iGeomJS - Internacionalizado Completo</title>
+    <style>
+        /* --- ESTILOS VISUAIS DA INTERFACE --- */
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #eaedf1; color: #333; }
+        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-lang { padding: 6px 12px; margin-left: 5px; cursor: pointer; border: 1px solid #bdc3c7; background: #fff; border-radius: 4px; font-size: 14px; }
+        .btn-lang:hover { background: #e2e8f0; }
+        
+        /* Simulação da Barra de Menus Superior do iGeomJS */
+        .navbar { display: flex; background: #2c3e50; padding: 10px; border-radius: 6px 6px 0 0; }
+        .menu-item { color: #ecf0f1; padding: 5px 15px; cursor: pointer; font-size: 14px; }
+        .menu-item:hover { background: #34495e; border-radius: 4px; }
+        
+        /* Simulação da Barra de Ferramentas Geométricas */
+        .toolbar { display: flex; background: white; padding: 10px; border-bottom: 2px solid #dcdde1; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .toolbar button { padding: 8px 12px; border: 1px solid #dcdde1; background: #f8f9fa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 500; }
+        .toolbar button:hover { background: #e9ecef; }
+        
+        /* Área Gráfica do Canvas */
+        .canvas-simulation { height: 250px; background: #ffffff; border: 2px dashed #b2bec3; border-radius: 0 0 6px 6px; display: flex; justify-content: center; align-items: center; font-style: italic; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <div class="header-controls">
+        <h2 id="app-title">Carregando...</h2>
+        <div>
+            <button class="btn-lang" id="btn-lang-pt">🇧🇷 PT</button>
+            <button class="btn-lang" id="btn-lang-en">🇺🇸 EN</button>
+            <button class="btn-lang" id="btn-lang-es">🇪🇸 ES</button>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <div class="menu-item" id="menu-file"></div>
+        <div class="menu-item" id="menu-edit"></div>
+        <div class="menu-item" id="menu-view"></div>
+        <div class="menu-item" id="menu-help"></div>
+    </div>
+
+    <div class="toolbar">
+        <button id="btn-point"></button>
+        <button id="btn-line"></button>
+        <button id="btn-circle"></button>
+        <button id="btn-intersection"></button>
+    </div>
+
+    <div class="canvas-simulation">
+        Espaço de Desenho Geométrico (Canvas iGeomJS)
+    </div>
+
+
+    <script>
+        // --- PASSO A: BANCO DE DADOS DE IDIOMAS (Os antigos arquivos da pasta lang/) ---
+        const ptBr = {
+          messages: { welcome: "Bem-vindo ao iGeomJS!", loading: "Carregando ambiente geométrico..." },
+          menu: { file: "Arquivo", edit: "Editar", view: "Visualizar", help: "Ajuda" },
+          tools: { point: "Ponto", line: "Reta", circle: "Círculo", intersection: "Intersecção" }
+        };
+
+        const en = {
+          messages: { welcome: "Welcome to iGeomJS!", loading: "Loading geometric environment..." },
+          menu: { file: "File", edit: "Edit", view: "View", help: "Help" },
+          tools: { point: "Point", line: "Line", circle: "Circle", intersection: "Intersection" }
+        };
+
+        const es = {
+          messages: { welcome: "¡Bienvenido a iGeomJS!", loading: "Cargando entorno geométrico..." },
+          menu: { file: "Archivo", edit: "Editar", view: "Vista", help: "Ayuda" },
+          tools: { point: "Punto", line: "Línea", circle: "Circunferencia", intersection: "Intersección" }
+        };
+
+        // Dicionário mapeador
+        const languages = {
+          'pt-br': ptBr, 'pt': ptBr,
+          'en': en,
+          'es': es, 'es-es': es
+        };
+
+        // --- PASSO B: ESTADO DO MOTOR ---
+        let currentLanguage = 'pt-br';
+        let dictionary = languages[currentLanguage];
+
+        // --- PASSO C: O MOTOR DE TRADUÇÃO (i18n) ---
+        const i18n = {
+          // Modifica o idioma atual e recarrega o dicionário correspondente
+          setLanguage(langCode) {
+            if (!langCode) return;
+            const code = langCode.toLowerCase();
+            const shortCode = code.split('-')[0]; // Trata variações como 'en-US' -> 'en'
+
+            if (languages[code]) {
+                currentLanguage = code;
+                dictionary = languages[code];
+            } else if (languages[shortCode]) {
+                currentLanguage = shortCode;
+                dictionary = languages[shortCode];
+            }
+          },
+          // Função de busca por caminhos em ponto (ex: 'tools.point')
+          t(path) {
+            try {
+              return path.split('.').reduce((obj, key) => obj[key], dictionary) || path;
+            } catch (e) { 
+              return path; 
+            }
+          }
+        };
+        
+        // Atalho curto para a tradução
+        const _ = i18n.t;
+
+        // --- PASSO D: O ORQUESTRADOR DA INTERFACE (Mapeia e atualiza o HTML) ---
+        function atualizarInterface() {
+            // Atualiza os textos simples
+            document.getElementById('app-title').innerText = _('messages.welcome');
+            
+            // Atualiza os menus superiores
+            document.getElementById('menu-file').innerText = _('menu.file');
+            document.getElementById('menu-edit').innerText = _('menu.edit');
+            document.getElementById('menu-view').innerText = _('menu.view');
+            document.getElementById('menu-help').innerText = _('menu.help');
+
+            // Atualiza os botões dinâmicos injetando ícones + texto traduzido
+            document.getElementById('btn-point').innerHTML = `📍 ${_('tools.point')}`;
+            document.getElementById('btn-line').innerHTML = `📏 ${_('tools.line')}`;
+            document.getElementById('btn-circle').innerHTML = `⭕ ${_('tools.circle')}`;
+            document.getElementById('btn-intersection').innerHTML = `✖️ ${_('tools.intersection')}`;
+        }
+
+        // --- PASSO E: ESCUTADORES DE EVENTO DE CLIQUE ---
+        document.getElementById('btn-lang-pt').addEventListener('click', () => {
+            i18n.setLanguage('pt-br');
+            atualizarInterface();
+        });
+
+        document.getElementById('btn-lang-en').addEventListener('click', () => {
+            i18n.setLanguage('en');
+            atualizarInterface();
+        });
+
+        document.getElementById('btn-lang-es').addEventListener('click', () => {
+            i18n.setLanguage('es');
+            atualizarInterface();
+        });
+
+        // --- PASSO F: DETECÇÃO AUTOMÁTICA AO INICIAR ---
+        // Verifica se há idioma na URL (?lang=es), se não houver pega o do sistema, se não houver usa pt-br
+        const urlParams = new URLSearchParams(window.location.search);
+        const detectLang = urlParams.get('lang') || navigator.language || 'pt-br';
+        
+        // Inicializa o motor e atualiza a tela pela primeira vez
+        i18n.setLanguage(detectLang);
+        atualizarInterface();
+    </script>
+</body>
+</html>
